@@ -1,9 +1,13 @@
 import bpy
 
-from .spring_bones import spring_bone
+from .spring_bones import BSB_SpringBoneSimulationStep
 
 
 @bpy.app.handlers.persistent
-def spring_bone_frame_mode(foo):
-    if bpy.context.scene.sb_global_spring_frame == True:
-        spring_bone(foo)
+def BSB_FrameChangePost(scene, depsgraph):
+    BSB_LAMBDA_FrameChangePost(scene, depsgraph)
+
+
+def BSB_LAMBDA_FrameChangePost(scene, depsgraph):
+    if (scene.sb_global_spring_frame == True):
+        BSB_SpringBoneSimulationStep(scene, depsgraph)
