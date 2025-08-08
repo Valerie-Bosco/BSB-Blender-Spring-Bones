@@ -1,0 +1,6 @@
+[submodule "BSB-Blender-Spring-Bones/modules/ALXModuleManager"]
+	path = BSB-Blender-Spring-Bones/modules/ALXModuleManager
+	url = https://github.com/Valerie-Bosco/ALXModuleManager.git
+[submodule "BSB-Blender-Spring-Bones/modules/ALXAddonUpdater"]
+	path = BSB-Blender-Spring-Bones/modules/ALXAddonUpdater
+	url = https://github.com/Valerie-Bosco/ALXAddonUpdater.git
