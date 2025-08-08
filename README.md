@@ -1,4 +1,5 @@
 # Spring Bones
+# REVIVAL PROJECT UNDERGOING: NOT YET FUNCTIONING
 Blender addon to add spring/bouncy dynamic effect to bones.
 
 ![alt text](https://github.com/artellblender/springbones/blob/master/bbones_chain.gif)
