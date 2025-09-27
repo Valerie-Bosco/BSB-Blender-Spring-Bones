@@ -1,4 +1,8 @@
 # Spring Bones
+# REVIVAL PROJECT UNDERGOING: NOT YET FUNCTIONING
+
+# UPDATE: IT'S MORE PROBLEMATIC THAN EXPECTED DEVELOPMENT IS SLOW VISIT : https://discord.com/invite/44fSbYrzZd for updates on the addon
+
 Blender addon to add spring/bouncy dynamic effect to bones.
 
 ![alt text](https://github.com/artellblender/springbones/blob/master/bbones_chain.gif)
