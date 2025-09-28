@@ -25,7 +25,6 @@ def BSB_SpringBoneSimulationStep(context: bpy.types.Context):
 
     for spring_bone in scene.bsb_spring_bones:
         spring_bone: BSB_PG_SpringBone
-        print("simulation step was ran")
         if spring_bone.bone_collider:
             continue
 
@@ -391,7 +390,6 @@ def update_bone(self, context: bpy.types.Context):
         b_can_collide = pose_bone_properties.b_should_collide
 
         if (is_spring_bone or is_collider_bone):
-            print(f"{pose_bone} was updated")
             bone_tail = armature.matrix_world @ pose_bone.tail
             bone_head = armature.matrix_world @ pose_bone.head
 
@@ -479,8 +477,6 @@ def end_spring_bone(self, context: bpy.types.Context):
         if emp2:
             bpy.data.objects.remove(emp2)
 
-    print("--End--")
-
 
 class SB_OT_spring_modal(bpy.types.Operator):
     """Spring Bones, interactive mode"""
@@ -491,8 +487,6 @@ class SB_OT_spring_modal(bpy.types.Operator):
     timer_handler = None
 
     def terminate_modal(self, context: bpy.types.Context):
-        print("TEMINATE WAS RAN")
-
         if (self.timer_handler is not None):
             wm: bpy.types.WindowManager = context.window_manager
             wm.modal_handler_add
@@ -540,7 +534,6 @@ class SB_OT_spring_modal(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
     def invoke(self, context: bpy.types.Context, event):
-        print("INVOKE WAS RAN")
         scene_properties: BSB_PG_SceneProperties = context.scene.bsb_scene_properties
 
         if (scene_properties.b_global_spring == False):
@@ -593,7 +586,6 @@ class SB_OT_select_bone(bpy.types.Operator):
         for i, l in enumerate(data_bone.layers):
             if l == True and bpy.context.active_object.data.layers[i] == False:
                 bpy.context.active_object.data.layers[i] = True
-                # print("enabled layer", i)
 
         # get_pose_bone(self.bone_name).select = True
 
