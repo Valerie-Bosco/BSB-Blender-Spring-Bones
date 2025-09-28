@@ -17,7 +17,7 @@ Discord Server: https://discord.gg/44fSbYrzZd
 <br>
 
 ### Installation:
-- Download the [XNALara-io-Tools.zip ](https://github.com/Valerie-Bosco/BSB-Blender-Spring-Bones/releases/download/main_branch_latest/BSB-Blender-Spring-Bones.zip) available from the [releases](https://github.com/Valerie-Bosco/BSB-Blender-Spring-Bones/releases/tag/main_branch_latest) page, 
+- Download the [BSB-Blender-Spring-Bones.zip ](https://github.com/Valerie-Bosco/BSB-Blender-Spring-Bones/releases/download/main_branch_latest/BSB-Blender-Spring-Bones.zip) available from the [releases](https://github.com/Valerie-Bosco/BSB-Blender-Spring-Bones/releases/tag/main_branch_latest) page, 
 - In blender [4.1-]: preferences -> addons -> install addon -> select the [BSB-Blender-Spring-Bones.zip] -> click install 
 - In blender [4.2+]: preferences -> addons -> top right dropdown -> install from disk -> select the [BSB-Blender-Spring-Bones.zip] -> click install from disk
 
