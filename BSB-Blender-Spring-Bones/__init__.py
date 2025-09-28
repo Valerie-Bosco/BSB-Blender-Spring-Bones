@@ -1,4 +1,7 @@
 
+import bpy
+
+from .BSB_Handlers import BSB_FrameChangePost
 from .BSB_Properties import BSB_RegisterProperties, BSB_UnregisterProperties
 from .modules.ALXAddonUpdater.ALXAddonUpdater.ALX_AddonUpdater import \
     Alx_Addon_Updater
@@ -8,7 +11,7 @@ from .modules.ALXModuleManager.ALXModuleManager.ALX_ModuleManager import \
 bl_info = {
     "name": "BSB-Blender-Spring-Bones",
     "author": "Valerie Bosco, Artell[original dev]",
-    "version": (1, 0, 0),
+    "version": (1, 1, 0),
     "blender": (3, 6, 0),
     "location": "Properties > Bones",
     "description": "Add a spring dynamic effect to a single/multiple bones",
@@ -36,7 +39,7 @@ def register():
 
     BSB_RegisterProperties()
 
-    # bpy.app.handlers.frame_change_post.append(BSB_FrameChangePost)
+    bpy.app.handlers.frame_change_post.append(BSB_FrameChangePost)
 
 
 def unregister():
@@ -44,10 +47,8 @@ def unregister():
     addon_updater.unregister_addon_updater()
 
     BSB_UnregisterProperties()
-    #
-    #
 
-    # bpy.app.handlers.frame_change_post.remove(BSB_FrameChangePost)
+    bpy.app.handlers.frame_change_post.remove(BSB_FrameChangePost)
 
 
 if __name__ == "__main__":

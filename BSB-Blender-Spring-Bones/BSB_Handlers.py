@@ -9,5 +9,5 @@ def BSB_FrameChangePost(scene, depsgraph):
 
 
 def BSB_LAMBDA_FrameChangePost(scene, depsgraph):
-    if (scene.sb_global_spring_frame == True):
-        BSB_SpringBoneSimulationStep(scene, depsgraph)
+    if (scene.bsb_scene_properties.b_global_sim_only_on_frame_change == True):
+        BSB_SpringBoneSimulationStep(bpy.context)
