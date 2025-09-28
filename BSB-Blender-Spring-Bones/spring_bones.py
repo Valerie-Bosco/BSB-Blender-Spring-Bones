@@ -1,4 +1,3 @@
-import time
 from math import sqrt
 
 import bpy
@@ -25,10 +24,12 @@ def BSB_SpringBoneSimulationStep(context: bpy.types.Context):
     depsgraph = context.evaluated_depsgraph_get()
 
     for spring_bone in scene.bsb_spring_bones:
+        spring_bone: BSB_PG_SpringBone
+        print("simulation step was ran")
         if spring_bone.bone_collider:
             continue
 
-        armature = bpy.data.objects[spring_bone.armature]
+        armature = spring_bone.armature
         pose_bone = armature.pose.bones[spring_bone.name]
         pose_bone_properties: BSB_PG_PoseBoneProperties = pose_bone.bsb_pose_bone_properties
 
@@ -50,7 +51,7 @@ def BSB_SpringBoneSimulationStep(context: bpy.types.Context):
 
         if (spring_bone.b_is_bone_colliding):
             for bone_collider in scene.bsb_spring_bones:
-                if bone_collider.sb_bone_collider == False:
+                if bone_collider.bone_collider == False:
                     continue
 
                 pose_bone_collider: BSB_PG_SpringBone = armature.pose.bones[bone_collider.name]
@@ -110,45 +111,49 @@ def BSB_SpringBoneSimulationStep(context: bpy.types.Context):
                     base_pos_dir += push_vec
 
             # evaluate mesh collision
-            if spring_bone.sb_bone_colliding:
-                for mesh in scene.sb_mesh_colliders:
-                    obj = bpy.data.objects.get(mesh.name)
-                    pose_bone_center = (pose_bone.tail + pose_bone.head) * 0.5
-                    col_dir = mathutils.Vector((0.0, 0.0, 0.0))
-                    push_vec = mathutils.Vector((0.0, 0.0, 0.0))
+            if spring_bone.b_is_bone_colliding:
+                pass
+                # for mesh in scene.sb_mesh_colliders:
+                #     obj = bpy.data.objects.get(mesh.name)
+                #     pose_bone_center = (pose_bone.tail + pose_bone.head) * 0.5
+                #     col_dir = mathutils.Vector((0.0, 0.0, 0.0))
+                #     push_vec = mathutils.Vector((0.0, 0.0, 0.0))
 
-                    object_eval = obj.evaluated_get(depsgraph)
-                    evaluated_mesh = object_eval.to_mesh(
-                        preserve_all_data_layers=False, depsgraph=depsgraph)
-                    for tri in obj.data.loop_triangles:
-                        tri_coords = []
-                        for vi in tri.vertices:
-                            v_coord = evaluated_mesh.vertices[vi].co
-                            v_coord_global = obj.matrix_world @ v_coord
-                            tri_coords.append(
-                                [v_coord_global[0], v_coord_global[1], v_coord_global[2]])
+                #     object_eval = obj.evaluated_get(depsgraph)
+                #     evaluated_mesh = object_eval.to_mesh(
+                #         preserve_all_data_layers=False, depsgraph=depsgraph)
+                #     for tri in obj.data.loop_triangles:
+                #         tri_coords = []
+                #         for vi in tri.vertices:
+                #             v_coord = evaluated_mesh.vertices[vi].co
+                #             v_coord_global = obj.matrix_world @ v_coord
+                #             tri_coords.append(
+                #                 [v_coord_global[0], v_coord_global[1], v_coord_global[2]])
 
-                        tri_array = numpy.array(tri_coords)
-                        P = numpy.array(
-                            [pose_bone_center[0], pose_bone_center[1], pose_bone_center[2]])
-                        dist, p = project_point_onto_tri(tri_array, P)
-                        p = mathutils.Vector((p[0], p[1], p[2]))
-                        collision_dist = obj.sb_collider_dist
-                        repel_force = obj.sb_collider_force
+                #         tri_array = numpy.array(tri_coords)
+                #         P = numpy.array(
+                #             [pose_bone_center[0], pose_bone_center[1], pose_bone_center[2]])
+                #         dist, p = project_point_onto_tri(tri_array, P)
+                #         p = mathutils.Vector((p[0], p[1], p[2]))
+                #         collision_dist = obj.sb_collider_dist
+                #         repel_force = obj.sb_collider_force
 
-                        if dist < collision_dist:
-                            col_dir += (pose_bone_center - p)
-                            push_vec = col_dir.normalized() * (collision_dist - dist) * repel_force
-                            base_pos_dir += push_vec * pose_bone.sb_global_influence
+                #         if dist < collision_dist:
+                #             col_dir += (pose_bone_center - p)
+                #             push_vec = col_dir.normalized() * (collision_dist - dist) * repel_force
+                #             base_pos_dir += push_vec * pose_bone.sb_global_influence
 
         # add velocity
-        spring_bone.speed += base_pos_dir * pose_bone.sb_stiffness
-        spring_bone.speed *= pose_bone.sb_damp
+        spring_bone.speed += (
+            base_pos_dir *
+            pose_bone.bsb_pose_bone_properties.spring_stiffness
+        )
+        spring_bone.speed *= pose_bone.bsb_pose_bone_properties.spring_dampening_force
 
         empty_head.location += spring_bone.speed
         # global influence
         empty_head.location = lerp_vec(
-            empty_head.location, emp_tail_loc, pose_bone.sb_global_influence)
+            empty_head.location, emp_tail_loc, pose_bone.bsb_pose_bone_properties.global_influence)
 
     return None
 
@@ -360,9 +365,7 @@ def project_point_onto_tri(TRI, P):
 
 
 def update_bone(self, context: bpy.types.Context):
-    time_start = time.time()
-    scene = context.scene
-    armature = context.active_object
+    armature = context.pose_object
     deps = context.evaluated_depsgraph_get()
 
     scene_properties = context.scene.bsb_scene_properties
@@ -374,31 +377,33 @@ def update_bone(self, context: bpy.types.Context):
             if (constraint is not None):
                 pose_bone.constraints.remove(constraint)
 
-    for spring_bone, i in enumerate(scene_spring_bones):
+    for i in range(0, len(scene_spring_bones)):
         scene_spring_bones.remove(i)
 
     for pose_bone in armature.pose.bones:
 
-        is_spring_bone = pose_bone.get("b_enable_spring")
-        is_collider_bone = pose_bone.get("b_enable_as_collider")
+        pose_bone_properties: BSB_PG_PoseBoneProperties = pose_bone.bsb_pose_bone_properties
 
-        rotation_enabled = pose_bone.get("b_enable_bone_rotation")
-        b_can_collide = pose_bone.get('b_should_collide')
+        is_spring_bone = pose_bone_properties.b_enable_spring
+        is_collider_bone = pose_bone_properties.b_enable_as_collider
+
+        rotation_enabled = pose_bone_properties.b_enable_bone_rotation
+        b_can_collide = pose_bone_properties.b_should_collide
 
         if (is_spring_bone or is_collider_bone):
+            print(f"{pose_bone} was updated")
+            bone_tail = armature.matrix_world @ pose_bone.tail
+            bone_head = armature.matrix_world @ pose_bone.head
+
             item: BSB_PG_SpringBone = scene_spring_bones.add()
             item.name = pose_bone.name
-            item.armature = armature.name
+            item.armature = armature
             item.last_location = bone_head
 
             parent_name = pose_bone.parent.name if pose_bone.parent is not None else ""
 
-            item.b_enable_bone_rotation = rotation_enabled
             item.bone_collider = is_collider_bone
             item.b_is_bone_colliding = b_can_collide
-
-            bone_tail = armature.matrix_world @ pose_bone.tail
-            bone_head = armature.matrix_world @ pose_bone.head
 
             empty_radius = 1
             if (is_spring_bone):
@@ -406,16 +411,19 @@ def update_bone(self, context: bpy.types.Context):
                     empty_anchor = bpy.data.objects.new(
                         item.name + '_spring', None
                     )
+                    context.scene.collection.objects.link(empty_anchor)
                     empty_anchor.empty_display_size = empty_radius
                     empty_anchor.empty_display_type = 'PLAIN_AXES'
                     empty_anchor.location = bone_tail if rotation_enabled else bone_head
                     empty_anchor.hide_set(True)
                     empty_anchor.hide_select = True
-                    context.scene.collection.objects.link(empty_anchor)
 
                 if (bpy.data.objects.get(item.name + '_spring_tail') is None):
                     empty_anchor_tail = bpy.data.objects.new(
                         item.name + '_spring_tail', None
+                    )
+                    context.scene.collection.objects.link(
+                        empty_anchor_tail
                     )
                     empty_anchor_tail.empty_display_size = empty_radius
                     empty_anchor_tail.empty_display_type = 'PLAIN_AXES'
@@ -431,15 +439,12 @@ def update_bone(self, context: bpy.types.Context):
                     empty_anchor_tail.parent_bone = parent_name
                     empty_anchor_tail.matrix_world = matrix
 
-                    context.scene.collection.objects.link(
-                        empty_anchor_tail)
-
                 spring_constraint = pose_bone.constraints.get("spring")
                 if (spring_constraint is not None):
                     pose_bone.constraints.remove(spring_constraint)
 
                 constraint = None
-                if (pose_bone.b_enable_bone_rotation):
+                if (pose_bone.bsb_pose_bone_properties.b_enable_bone_rotation):
                     constraint = pose_bone.constraints.new('DAMPED_TRACK')
                     constraint.target = bpy.data.objects[item.name + '_spring']
                 else:
@@ -448,18 +453,18 @@ def update_bone(self, context: bpy.types.Context):
                 constraint.name = 'spring'
 
 
-def end_spring_bone(context, self):
-    if context.scene.sb_global_spring:
-        # print("GOING TO CLOSE TIMER...")
-        wm = context.window_manager
+def end_spring_bone(self, context: bpy.types.Context):
+    scene_properties: BSB_PG_SceneProperties = context.scene.bsb_scene_properties
+    if scene_properties.b_global_spring:
+
+        wm: bpy.types.WindowManager = context.window_manager
         wm.event_timer_remove(self.timer_handler)
-        # print("CLOSE TIMER")
 
-        context.scene.sb_global_spring = False
+        scene_properties.b_global_spring = False
 
-    for item in context.scene.sb_spring_bones:
+    for item in context.scene.bsb_spring_bones:
 
-        active_bone = bpy.context.active_object.pose.bones.get(item.name)
+        active_bone = context.active_object.pose.bones.get(item.name)
         if active_bone == None:
             continue
 
@@ -486,8 +491,11 @@ class SB_OT_spring_modal(bpy.types.Operator):
     timer_handler = None
 
     def terminate_modal(self, context: bpy.types.Context):
+        print("TEMINATE WAS RAN")
+
         if (self.timer_handler is not None):
             wm: bpy.types.WindowManager = context.window_manager
+            wm.modal_handler_add
             wm.event_timer_remove(self.timer_handler)
 
         if (context.scene is not None):
@@ -495,10 +503,10 @@ class SB_OT_spring_modal(bpy.types.Operator):
             scene_properties.b_global_spring = False
 
             if (context.pose_object is not None):
-                armature: bpy.types.Object = context.pose_object
+                armature_object: bpy.types.Object = context.pose_object
 
                 for item in context.scene.bsb_spring_bones:
-                    active_bone: bpy.types.PoseBone = armature.pose.bones.get(
+                    active_bone: bpy.types.PoseBone = armature_object.pose.bones.get(
                         item.name
                     )
                     if (active_bone is None):
@@ -519,35 +527,36 @@ class SB_OT_spring_modal(bpy.types.Operator):
                     if (anchor_tail is not None):
                         bpy.data.objects.remove(anchor_tail)
 
+            scene_properties.b_global_spring = False
         return {"FINISHED"}
 
     def modal(self, context, event):
         if (event.type == "ESC") or (context.scene.bsb_scene_properties.b_global_spring == False):
-            self.terminate_modal(context)
+            return self.terminate_modal(context)
 
         if (event.type == 'TIMER'):
             BSB_SpringBoneSimulationStep(context)
 
         return {'PASS_THROUGH'}
 
-    def invoke(self, context, event):
+    def invoke(self, context: bpy.types.Context, event):
+        print("INVOKE WAS RAN")
         scene_properties: BSB_PG_SceneProperties = context.scene.bsb_scene_properties
 
         if (scene_properties.b_global_spring == False):
             wm: bpy.types.WindowManager = context.window_manager
             self.timer_handler = wm.event_timer_add(
-                0.02, window=context.window)
+                0.02, window=context.window
+            )
             wm.modal_handler_add(self)
 
             scene_properties.b_global_spring = True
             update_bone(self, context)
 
-            return {'RUNNING_MODAL'}
-
         else:
-            scene_properties.b_global_spring = False
+            return self.terminate_modal(context)
 
-        return {"PASS_THROUGH"}
+        return {"RUNNING_MODAL"}
 
 
 class SB_OT_spring(bpy.types.Operator):
@@ -556,14 +565,15 @@ class SB_OT_spring(bpy.types.Operator):
     bl_idname = "sb.spring_bone_frame"
     bl_label = "spring_bone_frame"
 
-    def execute(self, context):
-        if context.scene.sb_global_spring_frame == False:
-            context.scene.sb_global_spring_frame = True
-            update_bone(self, context)
+    def execute(self, context: bpy.types.Context):
+        scene_properties: BSB_PG_SceneProperties = context.scene.bsb_scene_properties
 
+        if (scene_properties.b_global_sim_only_on_frame_change == False):
+            scene_properties.b_global_sim_only_on_frame_change = True
+            update_bone(self, context)
         else:
-            end_spring_bone(context, self)
-            context.scene.sb_global_spring_frame = False
+            end_spring_bone(self, context)
+            scene_properties.b_global_sim_only_on_frame_change = False
 
         return {'FINISHED'}
 

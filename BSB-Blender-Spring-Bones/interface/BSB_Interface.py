@@ -1,7 +1,7 @@
 import bpy
 
-from ..BSB_Properties import BSB_PG_SceneProperties
-from ..spring_bones import SB_OT_spring_modal
+from ..BSB_Properties import BSB_PG_PoseBoneProperties, BSB_PG_SceneProperties
+from ..spring_bones import SB_OT_spring, SB_OT_spring_modal
 
 
 class SB_PT_ui(bpy.types.Panel):
@@ -19,9 +19,9 @@ class SB_PT_ui(bpy.types.Panel):
 
         if (context.mode == "POSE") and (context.active_pose_bone is not None):
             scene_properties: BSB_PG_SceneProperties = context.scene.bsb_scene_properties
+            pose_bone_properties: BSB_PG_PoseBoneProperties = context.active_pose_bone.bsb_pose_bone_properties
 
             ui_scene_parameters = layout.column(align=True)
-
             if (scene_properties.b_global_spring == True):
                 ui_scene_parameters.operator(
                     SB_OT_spring_modal.bl_idname,
@@ -36,34 +36,57 @@ class SB_PT_ui(bpy.types.Panel):
                         icon="PLAY"
                     )
 
-            # if (scene_properties.b_global_sim_only_on_frame_change == False):
-            #     col.operator(SB_OT_spring.bl_idname,
-            #                  text="Start - Animation Mode", icon='PLAY')
-            # if scene_properties.b_global_sim_only_on_frame_change == True:
-            #     col.operator(SB_OT_spring.bl_idname, text="Stop", icon='PAUSE')
+            if scene_properties.b_global_sim_only_on_frame_change == True:
+                ui_scene_parameters.operator(
+                    SB_OT_spring.bl_idname, text="Stop", icon="PAUSE"
+                )
+            else:
+                ui_scene_parameters.operator(
+                    SB_OT_spring.bl_idname,
+                    text="Start - Animation Mode", icon="PLAY"
+                )
 
-            # col.enabled = not context.scene.sb_global_spring
+            ui_bone_parameters = layout.column(align=True)
+            ui_bone_parameters.label(text="Bone Parameters:")
 
-            col = layout.column(align=True)
+            ui_bone_parameters.prop(
+                pose_bone_properties, "b_enable_spring", text="Spring"
+            )
+            ui_bone_parameters.prop(
+                pose_bone_properties, "b_enable_bone_rotation", text="Fixed position [rotation mode]"
+            )
+            ui_bone_parameters.prop(
+                pose_bone_properties, "spring_stiffness", text="Stiffness"
+            )
+            ui_bone_parameters.prop(
+                pose_bone_properties, "spring_dampening_force", text="Dampening force"
+            )
+            ui_bone_parameters.prop(
+                pose_bone_properties, "spring_gravity", text="Gravity"
+            )
+            ui_bone_parameters.prop(
+                pose_bone_properties, "global_influence", text="Influence"
+            )
 
-            col.label(text='Bone Parameters:')
-            # col.prop(active_bone, 'sb_bone_spring', text="Spring")
-            # col.prop(active_bone, 'sb_bone_rot', text="Rotation")
-            # col.prop(active_bone, 'sb_stiffness', text="Bouncy")
-            # col.prop(active_bone, 'sb_damp', text="Speed")
-            # col.prop(active_bone, 'sb_gravity', text="Gravity")
-            # col.prop(active_bone, 'sb_global_influence', text="Influence")
-            # col.prop(active_bone, 'sb_collide', text="Is Colliding")
-            # col.label(text="Lock axis when colliding:")
-            # col.prop(active_bone, 'sb_lock_axis', text="")
-            # col.enabled = not active_bone.sb_bone_collider
+            ui_bone_parameters.separator()
 
-            layout.separator()
-            col = layout.column(align=True)
-            # col.prop(active_bone, 'sb_bone_collider', text="Collider")
-            # col.prop(active_bone, 'sb_collider_dist', text="Collider Distance")
-            # col.prop(active_bone, 'sb_collider_force', text="Collider Force")
-            # # col.enabled = not active_bone.sb_bone_spring
+            ui_bone_parameters.prop(
+                pose_bone_properties, "b_enable_as_collider", text="Is collider"
+            )
+            ui_bone_parameters.prop(
+                pose_bone_properties, "b_should_collide", text="Should collide"
+            )
+            ui_bone_parameters.prop(
+                pose_bone_properties, "collider_radius", text="Collider Distance"
+            )
+            ui_bone_parameters.prop(
+                pose_bone_properties, "collider_repulsion_force", text="Collider Force"
+            )
+
+            ui_bone_parameters.label(text="Lock axis when colliding:")
+            ui_bone_parameters.prop(
+                pose_bone_properties, "spring_axis_lock", text=""
+            )
 
             layout.separator()
             # layout.prop(scene, "sb_show_colliders")

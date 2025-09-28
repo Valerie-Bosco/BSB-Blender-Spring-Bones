@@ -2,7 +2,7 @@ import bpy
 
 
 class BSB_PG_SpringBone(bpy.types.PropertyGroup):
-    armature: bpy.props.PointerProperty(type=bpy.types.Armature)  # type:ignore
+    armature: bpy.props.PointerProperty(type=bpy.types.Object)  # type:ignore
     last_location: bpy.props.FloatVectorProperty(
         name="Loc",
         subtype='DIRECTION',
@@ -24,10 +24,6 @@ class BSB_PG_SpringBone(bpy.types.PropertyGroup):
         subtype='DIRECTION',
         default=(0, 0, 0),
         size=3
-    )  # type:ignore
-    b_enable_bone_rotation: bpy.props.BoolProperty(
-        name="Bone Rotation",
-        default=False
     )  # type:ignore
     bone_collider: bpy.props.BoolProperty(
         name="Bone collider",
@@ -93,6 +89,10 @@ class BSB_PG_PoseBoneProperties(bpy.types.PropertyGroup):
         name="Enabled",
         default=False,
         description="Enable spring effect on this bone"
+    )  # type:ignore
+    b_enable_bone_rotation: bpy.props.BoolProperty(
+        name="Bone Rotation",
+        default=False
     )  # type:ignore
     spring_stiffness: bpy.props.FloatProperty(
         name="Stiffness",
