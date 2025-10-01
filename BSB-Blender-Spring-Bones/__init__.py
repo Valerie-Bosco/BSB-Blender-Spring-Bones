@@ -11,7 +11,7 @@ from .modules.ALXModuleManager.ALXModuleManager.ALX_ModuleManager import \
 bl_info = {
     "name": "BSB-Blender-Spring-Bones",
     "author": "Valerie Bosco, Artell[original dev]",
-    "version": (1, 1, 0),
+    "version": (1, 1, 1),
     "blender": (3, 6, 0),
     "location": "Properties > Bones",
     "description": "Add a spring dynamic effect to a single/multiple bones",
