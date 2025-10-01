@@ -1,14 +1,18 @@
+from ..BSB_Operators import BSB_OT_BakeAnimationToAction
 import bpy
 
 from ..BSB_Properties import BSB_PG_PoseBoneProperties, BSB_PG_SceneProperties
 from ..spring_bones import SB_OT_spring, SB_OT_spring_modal
 
 
-class SB_PT_ui(bpy.types.Panel):
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'bone'
+class BSB_PT_UI(bpy.types.Panel):
     bl_label = "Spring Bones"
+    bl_idname = "BSB_PT_ui"
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+
+    bl_category = "BSB"
 
     @classmethod
     def poll(cls, context):
@@ -17,7 +21,7 @@ class SB_PT_ui(bpy.types.Panel):
     def draw(self, context):
         layout: bpy.types.UILayout = self.layout.column(align=True)
 
-        if (context.mode == "POSE") and (context.active_pose_bone is not None):
+        if (context.active_pose_bone is not None):
             scene_properties: BSB_PG_SceneProperties = context.scene.bsb_scene_properties
             pose_bone_properties: BSB_PG_PoseBoneProperties = context.active_pose_bone.bsb_pose_bone_properties
 
@@ -46,8 +50,14 @@ class SB_PT_ui(bpy.types.Panel):
                     text="Start - Animation Mode", icon="PLAY"
                 )
 
+            bake_button = layout.operator(
+                BSB_OT_BakeAnimationToAction.bl_idname,
+                text="Bake to action"
+            )
+
             ui_bone_parameters = layout.column(align=True)
-            ui_bone_parameters.label(text="Bone Parameters:")
+            ui_bone_parameters.label(
+                text=f"Bone Parameters: [{context.active_pose_bone.name}]")
 
             ui_bone_parameters.prop(
                 pose_bone_properties, "b_enable_spring", text="Spring"
@@ -129,9 +139,16 @@ class SB_PT_object_ui(bpy.types.Panel):
             ):
 
                 col = layout.column(align=True)
-                col.prop(context.active_object,
-                         "sb_object_collider", text="Collider")
-                col.prop(context.active_object, "sb_collider_dist",
-                         text="Collider Distance")
-                col.prop(context.active_object,
-                         "sb_collider_force", text="Collider Force")
+                col.prop(
+                    context.active_object,
+                    "sb_object_collider", text="Collider"
+                )
+                col.prop(
+                    context.active_object,
+                    "sb_collider_dist", text="Collider Distance"
+
+                )
+                col.prop(
+                    context.active_object,
+                    "sb_collider_force", text="Collider Force"
+                )
