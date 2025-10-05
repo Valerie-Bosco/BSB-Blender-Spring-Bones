@@ -59,6 +59,18 @@ class BSB_PG_SceneProperties(bpy.types.PropertyGroup):
         default=False
     )  # type:ignore
 
+    b_use_scene_framerate: bpy.props.BoolProperty(
+        name="",
+        default=True
+    )  # type:ignore
+
+    custom_framerate: bpy.props.FloatProperty(
+        name="",
+        default=24.0,
+        min=1.0,
+        max=240.0
+    )  # type:ignore
+
 
 class BSB_PG_ObjectProperties(bpy.types.PropertyGroup):
     b_enable_as_collider: bpy.props.BoolProperty(

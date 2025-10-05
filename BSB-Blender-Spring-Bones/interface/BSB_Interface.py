@@ -1,6 +1,6 @@
-from ..BSB_Operators import BSB_OT_BakeAnimationToAction
 import bpy
 
+from ..BSB_Operators import BSB_OT_BakeAnimationToAction
 from ..BSB_Properties import BSB_PG_PoseBoneProperties, BSB_PG_SceneProperties
 from ..spring_bones import SB_OT_spring, SB_OT_spring_modal
 
@@ -16,12 +16,17 @@ class BSB_PT_UI(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return (context is not None) and (context.mode == "POSE") and (context.active_object is not None)
+        return True
 
     def draw(self, context):
         layout: bpy.types.UILayout = self.layout.column(align=True)
 
-        if (context.active_pose_bone is not None):
+        if (
+            (context is not None) and
+            (context.mode == "POSE") and
+            (context.active_object is not None) and
+            (context.active_pose_bone is not None)
+        ):
             scene_properties: BSB_PG_SceneProperties = context.scene.bsb_scene_properties
             pose_bone_properties: BSB_PG_PoseBoneProperties = context.active_pose_bone.bsb_pose_bone_properties
 
@@ -50,7 +55,20 @@ class BSB_PT_UI(bpy.types.Panel):
                     text="Start - Animation Mode", icon="PLAY"
                 )
 
-            bake_button = layout.operator(
+            layout.prop(
+                scene_properties,
+                "b_use_scene_framerate",
+                text="Use scene framerate"
+            )
+
+            if (scene_properties.b_use_scene_framerate == False):
+                layout.prop(
+                    scene_properties,
+                    "custom_framerate",
+                    text="Framerate"
+                )
+
+            layout.operator(
                 BSB_OT_BakeAnimationToAction.bl_idname,
                 text="Bake to action"
             )
@@ -100,7 +118,6 @@ class BSB_PT_UI(bpy.types.Panel):
 
             layout.separator()
             # layout.prop(scene, "sb_show_colliders")
-            col = layout.column(align=True)
 
             # if scene.sb_show_colliders:
             #     for pbone in bpy.context.active_object.pose.bones:
@@ -110,6 +127,8 @@ class BSB_PT_UI(bpy.types.Panel):
             #                 row.label(text=pbone.name)
             #                 r = row.operator(SB_OT_select_bone.bl_idname, text="Select")
             #                 r.bone_name = pbone.name
+        else:
+            layout.label(text="Only available in pose mode ")
 
 
 class SB_PT_object_ui(bpy.types.Panel):

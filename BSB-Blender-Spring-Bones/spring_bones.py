@@ -20,17 +20,22 @@ def get_pose_bone(armature_object: bpy.types.Object, name: str):
 
 
 def BSB_SpringBoneSimulationStep(context: bpy.types.Context):
-    scene = context.scene
+    scene: bpy.types.Scene = context.scene
     depsgraph = context.evaluated_depsgraph_get()
 
     for spring_bone in scene.bsb_spring_bones:
         spring_bone: BSB_PG_SpringBone
+
         if spring_bone.bone_collider:
             continue
 
         armature = spring_bone.armature
         pose_bone = armature.pose.bones[spring_bone.name]
         pose_bone_properties: BSB_PG_PoseBoneProperties = pose_bone.bsb_pose_bone_properties
+
+        # FIRST STEP CLEAR
+        if (scene.frame_current == scene.frame_start):
+            spring_bone.speed = 0.0
 
         if pose_bone_properties.global_influence == 0.0:
             continue
@@ -157,13 +162,9 @@ def BSB_SpringBoneSimulationStep(context: bpy.types.Context):
     return None
 
 
-def project_point_onto_plane(q, p, n):
-    # q = (vector) point source
-    # p = (vector) point belonging to the plane
-    # n = (vector) normal of the plane
-
-    n = n.normalized()
-    return q - ((q - p).dot(n)) * n
+def project_point_onto_plane(point_source, plane_point, plane_normal):
+    plane_normal = plane_normal.normalized()
+    return point_source - ((point_source - plane_point).dot(plane_normal)) * plane_normal
 
 
 def project_point_onto_line(a, b, p):
@@ -361,6 +362,11 @@ def project_point_onto_tri(TRI, P):
 
     PP0 = B + s * E0 + t * E1
     return dist, PP0
+# endregion
+# endregion
+# endregion
+# endregion
+# endregion
 
 
 def update_bone(self, context: bpy.types.Context):
@@ -536,10 +542,13 @@ class SB_OT_spring_modal(bpy.types.Operator):
     def invoke(self, context: bpy.types.Context, event):
         scene_properties: BSB_PG_SceneProperties = context.scene.bsb_scene_properties
 
+        scene: bpy.types.Scene = context.scene
+
         if (scene_properties.b_global_spring == False):
             wm: bpy.types.WindowManager = context.window_manager
             self.timer_handler = wm.event_timer_add(
-                0.02, window=context.window
+                1 / (scene.render.fps if scene_properties.b_use_scene_framerate else scene_properties.custom_framerate),
+                window=context.window
             )
             wm.modal_handler_add(self)
 
