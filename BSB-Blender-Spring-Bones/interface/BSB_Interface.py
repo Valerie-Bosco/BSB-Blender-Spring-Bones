@@ -1,7 +1,9 @@
 import bpy
 
 from ..BSB_Operators import BSB_OT_BakeAnimationToAction
-from ..BSB_Properties import BSB_PG_PoseBoneProperties, BSB_PG_SceneProperties
+from ..BSB_Properties import (BSB_PG_ObjectProperties,
+                              BSB_PG_PoseBoneProperties,
+                              BSB_PG_SceneProperties)
 from ..spring_bones import SB_OT_spring, SB_OT_spring_modal
 
 
@@ -104,20 +106,11 @@ class BSB_PT_UI(bpy.types.Panel):
             ui_bone_parameters.prop(
                 pose_bone_properties, "b_should_collide", text="Should collide"
             )
-            ui_bone_parameters.prop(
-                pose_bone_properties, "collider_radius", text="Collider Distance"
-            )
-            ui_bone_parameters.prop(
-                pose_bone_properties, "collider_repulsion_force", text="Collider Force"
-            )
 
             ui_bone_parameters.label(text="Lock axis when colliding:")
             ui_bone_parameters.prop(
                 pose_bone_properties, "spring_axis_lock", text=""
             )
-
-            layout.separator()
-            # layout.prop(scene, "sb_show_colliders")
 
             # if scene.sb_show_colliders:
             #     for pbone in bpy.context.active_object.pose.bones:
@@ -125,10 +118,28 @@ class BSB_PT_UI(bpy.types.Panel):
             #             if pbone.sb_bone_collider:
             #                 row = col.row()
             #                 row.label(text=pbone.name)
-            #                 r = row.operator(SB_OT_select_bone.bl_idname, text="Select")
+            #                 r = row.operator(
+            #                     SB_OT_select_bone.bl_idname, text="Select")
             #                 r.bone_name = pbone.name
         else:
             layout.label(text="Only available in pose mode ")
+
+        if (
+            (context is not None) and
+            (context.mode == "OBJECT") and
+            (context.active_object is not None)
+        ):
+            object_properties: BSB_PG_ObjectProperties = context.active_object.bsb_object_properties
+            layout.separator()
+            layout.prop(object_properties, "b_collider", text="Is Collider")
+            layout.prop(
+                object_properties, "collider_radius",
+                text="Collision Thickness (Padding)"
+            )
+            layout.prop(
+                object_properties,
+                "collider_repulsion_force", text="Repulsion Force"
+            )
 
 
 class SB_PT_object_ui(bpy.types.Panel):
