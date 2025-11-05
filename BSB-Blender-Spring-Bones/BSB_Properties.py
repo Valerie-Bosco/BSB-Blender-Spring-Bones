@@ -47,9 +47,10 @@ class BSB_PG_PoseBoneProperties(bpy.types.PropertyGroup):
     spring_gravity: bpy.props.FloatProperty(
         name="Gravity",
         description="Additional vertical force to simulate gravity",
-        default=0.0,
+        default=-9.81,
         min=-100.0, max=100.0
     )  # type:ignore
+
     spring_axis_lock: bpy.props.EnumProperty(
         items=(('NONE', 'None', ""),
                ('+X', '+X', ''),
@@ -134,6 +135,10 @@ class BSB_PG_MeshColliders(bpy.types.PropertyGroup):
 
 
 class BSB_PG_SceneProperties(bpy.types.PropertyGroup):
+    simulation_scene: bpy.props.PointerProperty(
+        type=bpy.types.Scene
+    )  # type:ignore
+
     b_global_spring: bpy.props.BoolProperty(
         name="Enable spring",
         default=False
