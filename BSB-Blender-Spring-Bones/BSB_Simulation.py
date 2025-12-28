@@ -1,14 +1,25 @@
+import datetime
+import math
 from math import sqrt
 
 import bpy
 import mathutils
 import numpy
 
-from .BSB_Properties import (BSB_PG_ObjectProperties,
-                             BSB_PG_PoseBoneProperties, BSB_PG_SpringBone)
+from .BSB_Properties import (
+    BSB_PG_ObjectProperties,
+    BSB_PG_PoseBoneProperties,
+    BSB_PG_SpringBone,
+)
+
+
+def LerpVector(a, b, time):
+    return a + (b - a) * time
 
 
 def BSB_SpringBoneSimulationStep(context: bpy.types.Context):
+    timestep_start = datetime.datetime.now()
+
     scene: bpy.types.Scene = context.scene
     depsgraph = context.evaluated_depsgraph_get()
 
@@ -19,9 +30,11 @@ def BSB_SpringBoneSimulationStep(context: bpy.types.Context):
             continue
 
         empty_tail: bpy.types.Object = bpy.data.objects.get(
-            spring_bone.name + '_spring_tail')
+            spring_bone.name + "_spring_tail"
+        )
         empty_head: bpy.types.Object = bpy.data.objects.get(
-            spring_bone.name + '_spring')
+            spring_bone.name + "_spring"
+        )
 
         if empty_tail == None or empty_head == None:
             continue
@@ -31,7 +44,165 @@ def BSB_SpringBoneSimulationStep(context: bpy.types.Context):
         armature = spring_bone.armature
         # # TODO get bone lookup cost
         pose_bone: bpy.types.PoseBone = armature.pose.bones[spring_bone.name]
-        pose_bone_properties: BSB_PG_PoseBoneProperties = pose_bone.bsb_pose_bone_properties
+        pose_bone_properties: BSB_PG_PoseBoneProperties = (
+            pose_bone.bsb_pose_bone_properties
+        )
+
+        # bone_vector = empty_tail.location - empty_head.location
+        # b = (empty_tail.location - empty_head.location) + mathutils.Vector((
+        #     gravity_vector[0],
+        #     gravity_vector[1],
+        #     gravity_vector[2]
+        # ))
+        # force_dvector = (b * (3/4)) + (bone_vector * (3/4))
+
+        # bone_vector: mathutils.Vector = empty_tail.location - empty_head.location
+        # bone_angle = gravity_vector.rotation_difference(bone_vector).to_euler()
+        #
+        # # gravity alligned
+        # tangent_vector: mathutils.Vector = bone_vector.normalized()
+        # tangent_vector.rotate(
+        #     mathutils.Euler((
+        #         -math.radians(math.copysign(90, bone_angle[0])),
+        #         -math.radians(math.copysign(90, bone_angle[1])),
+        #         0
+        #     ))
+        # )
+
+        # tangent_vector.rotate(mathutils.Euler((math.radians(-90), 0, 0)))
+        # tangent_vector.rotate(
+        #     mathutils.Euler((math.radians(90), 0, 0))
+        # )
+
+        # (empty_tail.location - empty_head.location)
+
+        # gravity.rotate(gravity.rotation_difference(tangent_vector))
+
+        # spring_bone.tail_speed += (
+        #     (gravity * tangent_vector) *
+        #     pose_bone_properties.spring_stiffness
+        # )
+        # spring_bone.tail_speed *= pose_bone_properties.spring_dampening_force
+        #
+        # empty_tail.location += spring_bone.tail_speed
+
+        # region FORMULA
+        gravity_vector: mathutils.Vector = mathutils.Vector(
+            pose_bone_properties.spring_gravity_vector
+        )
+        gravity: mathutils.Vector = (
+            -pose_bone_properties.spring_gravity * gravity_vector
+        ) / 100.0
+        #
+
+
+
+
+        #
+        radius = pose_bone.length
+        reference_vector = mathutils.Vector((0, 0, -radius))
+
+        bone_vector: mathutils.Vector = empty_tail.location - empty_head.location
+
+        theta_radians = gravity_vector.angle(bone_vector)
+        tension = math.sin(theta_radians)
+
+        bone_vector.normalized() * (gravity.z * math.sin(theta_radians))
+        force = gravity
+
+        empty_tail.location += force
+
+        #
+
+        #
+        # tension =  * (-bone_vector)
+
+        # timestep_end = datetime.datetime.now()
+        #
+        # #TODO change datetime to time
+        # #TODO start thread at registration
+        # empty_tail.location = LerpVector(empty_tail.location, gravity + tension,  float(timestep_end.time() - timestep_start.time()) / (scene.render.fps/1.0))
+        #
+
+        # spring_bone.head_speed = gravity
+        # # spring_bone.head_speed += (empty_tail.location - empty_head.location) * pose_bone_properties.spring_stiffness
+        # # spring_bone.head_speed *= pose_bone_properties.spring_dampening_force
+        #
+        # empty_tail.location += spring_bone.head_speed
+        # empty_tail.location = LerpVector( empty_head.location, empty_tail.location, pose_bone_properties.global_influence)
+        #
+
+        #
+        # base_pos_dir = gravity
+        #
+        #
+        # # add velocity
+        # bone.speed += (empty_tail.location - empty_head.location) * pose_bone.sb_stiffness
+        # bone.speed *= pose_bone.sb_damp
+        #
+        # emp_head.location += bone.speed
+        # # global influence
+        # emp_head.location = lerp_vec(emp_head.location, emp_tail_loc, pose_bone.sb_global_influence)
+
+        # endregion
+
+        # spring_bone.head_speed += (
+
+        #     base_pos_dir *
+
+        #     pose_bone.bsb_pose_bone_properties.spring_stiffness
+        # )
+        # spring_bone.head_speed *= pose_bone.bsb_pose_bone_properties.spring_dampening_force
+
+        # empty_head.location += spring_bone.head_speed
+
+        # # global influence
+
+        # empty_head.location = lerp_vec(
+
+        #     empty_head.location, emp_tail_loc, pose_bone.bsb_pose_bone_properties.global_influence)
+
+        # spring_bone.tail_speed =
+
+        # empty_tail.location += spring_bone.tail_speed
+
+        # empty_head.location = LerpVector(
+        #     empty_head.location,
+        #     empty_tail.location,
+        #     pose_bone.bsb_pose_bone_properties.global_influence
+        # )
+
+        # mathutils.Vector((
+
+        #     # force_dvector.x * (
+        #     #     gravity *
+        #     #     (1 - abs((empty_tail.location.z - empty_head.location.z) / radius))
+        #     # ),
+        #     0,
+        #     0,
+        #     # (force_dvector.z) * (
+        #     gravity
+        #     # *
+        #     # (1 - abs((empty_tail.location.z - empty_head.location.z) / radius))
+        # )
+        # )
+
+        # print(
+        #     gravity * (
+        #         1 -
+        #         abs((empty_tail.location.z - empty_head.location.z)/radius)
+        #     ))
+        # empty_tail.location.z += (
+        #     (gravity * (1/pose_bone_properties.spring_dampening_force)) *
+        #     (1 - abs(empty_tail.location.z - empty_head.location.z/radius))
+        # )
+
+        # (
+        #     gravity *
+        #     (
+        #         empty_tail.location.x / pose_bone.length
+        #     )
+        # )
 
         # if pose_bone_properties.global_influence == 0.0:
         #     continue
@@ -162,38 +333,64 @@ def BSB_SpringBoneSimulationStep(context: bpy.types.Context):
         #     )
         # ))
 
-        # empty_tail.location.z +=
+        # TODO matrix multiply with armature object world position
 
-        pose_bone_properties.spring_gravity * (
-            1 -
-            abs(
-                (abs(pose_bone.tail.z) - abs(pose_bone.head.z)) /
-                pose_bone.length
-            )
-        )
+    #     co_x = pose_bone.tail.x - pose_bone.head.x
+    #     co_y = pose_bone.tail.y - pose_bone.head.y
 
-        # global influence
+    #     radius = pose_bone.length
+    #     sine = co_y/radius
+    #     cosine = co_x/radius
 
-        # empty_head.location = LerpVector(
-        #     empty_head.location,
-        #     emp_tail_loc,
-        #     pose_bone.bsb_pose_bone_properties.global_influence)
+    #     p_a2_p_c1 = (0, 0, 0)
+    #     p_a1 = (pose_bone.tail.x - pose_bone.head.x, pose_bone.tail.y -
+    #             pose_bone.head.y, pose_bone.tail.z - pose_bone.head.z)
+
+    #     p_b1 = pose_bone_properties.spring_gravity * (
+    #         1 -
+    #         abs(
+    #             (abs(pose_bone.tail.z) - abs(pose_bone.head.z)) /
+    #             pose_bone.length
+    #         )
+    #     )
+
+    # empty_tail.location
+
+    # pose_bone.tail
+
+    # abs(pose_bone.tail.z) - abs(pose_bone.head.z)
+
+    # global influence
+
+    # empty_head.location = LerpVector(
+    #     empty_head.location,
+    #     emp_tail_loc,
+    #     pose_bone.bsb_pose_bone_properties.global_influence)
 
     # scene: bpy.types.Scene = context.scene
     # last_simulation_frame = scene.frame_current
 
 
-def BSB_SpringBoneCollisionStep(scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph, bone_center: mathutils.Vector, influence: float, base_pos_dir, pose_bone: bpy.types.PoseBone):
-    if (hasattr(scene, "bsb_mesh_colliders")):
+def BSB_SpringBoneCollisionStep(
+        scene: bpy.types.Scene,
+        depsgraph: bpy.types.Depsgraph,
+        bone_center: mathutils.Vector,
+        influence: float,
+        base_pos_dir,
+        pose_bone: bpy.types.PoseBone,
+):
+    if hasattr(scene, "bsb_mesh_colliders"):
         for collider_objects in scene.bsb_mesh_colliders:
             mesh_object = bpy.data.objects.get(collider_objects.name)
-            object_eval: bpy.types.Object = mesh_object.evaluated_get(
-                depsgraph)
+            object_eval: bpy.types.Object = mesh_object.evaluated_get(depsgraph)
 
             evaluated_mesh: bpy.types.Mesh = object_eval.to_mesh(
-                preserve_all_data_layers=False, depsgraph=depsgraph)
+                preserve_all_data_layers=False, depsgraph=depsgraph
+            )
 
-            object_properties: BSB_PG_ObjectProperties = mesh_object.bsb_object_properties
+            object_properties: BSB_PG_ObjectProperties = (
+                mesh_object.bsb_object_properties
+            )
 
             v_direction = mathutils.Vector((0.0, 0.0, 0.0))
             v_push = mathutils.Vector((0.0, 0.0, 0.0))
@@ -203,26 +400,28 @@ def BSB_SpringBoneCollisionStep(scene: bpy.types.Scene, depsgraph: bpy.types.Dep
                 for vi in tri.vertices:
                     v_coord = evaluated_mesh.vertices[vi].co
                     v_coord_global = object_eval.matrix_world @ v_coord
-                    tri_coords.append(
-                        [*v_coord_global])
+                    tri_coords.append([*v_coord_global])
 
                 tri_array = numpy.array(tri_coords)
-                P = numpy.array(
-                    [*pose_bone.tail])
+                P = numpy.array([*pose_bone.tail])
                 dist, p = project_point_onto_tri(tri_array, P)
                 p = mathutils.Vector((p))
                 collision_dist = object_properties.collider_radius
                 repel_force = object_properties.collider_repulsion_force
 
                 if dist < collision_dist:
-                    v_direction += (bone_center - p)
-                    v_push = v_direction.normalized() * (collision_dist - dist) * repel_force
+                    v_direction += bone_center - p
+                    v_push = (
+                            v_direction.normalized() * (collision_dist - dist) * repel_force
+                    )
                     base_pos_dir += v_push * influence
 
 
 def project_point_onto_plane(point_source, plane_point, plane_normal):
     plane_normal = plane_normal.normalized()
-    return point_source - ((point_source - plane_point).dot(plane_normal)) * plane_normal
+    return (
+            point_source - ((point_source - plane_point).dot(plane_normal)) * plane_normal
+    )
 
 
 def project_point_onto_tri(TRI, P):
@@ -301,7 +500,9 @@ def project_point_onto_tri(TRI, P):
                 else:
                     if -d >= a:
                         s = 1
-                        sqrdistance = a + 2.0 * d + f  # GF 20101013 fixed typo d*s ->2*d
+                        sqrdistance = (
+                                a + 2.0 * d + f
+                        )  # GF 20101013 fixed typo d*s ->2*d
                     else:
                         s = -d / a
                         sqrdistance = d * s + f
@@ -310,8 +511,9 @@ def project_point_onto_tri(TRI, P):
                 invDet = 1.0 / det
                 s = s * invDet
                 t = t * invDet
-                sqrdistance = s * (a * s + b * t + 2.0 * d) + \
-                    t * (b * s + c * t + 2.0 * e) + f
+                sqrdistance = (
+                        s * (a * s + b * t + 2.0 * d) + t * (b * s + c * t + 2.0 * e) + f
+                )
     else:
         if s < 0.0:
             # region 2
@@ -327,8 +529,9 @@ def project_point_onto_tri(TRI, P):
                 else:
                     s = numer / denom
                     t = 1 - s
-                    sqrdistance = s * (a * s + b * t + 2 * d) + \
-                        t * (b * s + c * t + 2 * e) + f
+                    sqrdistance = (
+                            s * (a * s + b * t + 2 * d) + t * (b * s + c * t + 2 * e) + f
+                    )
 
             else:  # minimum on edge s=0
                 s = 0.0
@@ -358,9 +561,11 @@ def project_point_onto_tri(TRI, P):
                     else:
                         t = numer / denom
                         s = 1 - t
-                        sqrdistance = s * \
-                            (a * s + b * t + 2.0 * d) + t * \
-                            (b * s + c * t + 2.0 * e) + f
+                        sqrdistance = (
+                                s * (a * s + b * t + 2.0 * d)
+                                + t * (b * s + c * t + 2.0 * e)
+                                + f
+                        )
 
                 else:
                     t = 0.0
@@ -390,9 +595,11 @@ def project_point_onto_tri(TRI, P):
                     else:
                         s = numer / denom
                         t = 1 - s
-                        sqrdistance = s * \
-                            (a * s + b * t + 2.0 * d) + t * \
-                            (b * s + c * t + 2.0 * e) + f
+                        sqrdistance = (
+                                s * (a * s + b * t + 2.0 * d)
+                                + t * (b * s + c * t + 2.0 * e)
+                                + f
+                        )
 
     # account for numerical round-off error
     if sqrdistance < 0:
@@ -402,6 +609,8 @@ def project_point_onto_tri(TRI, P):
 
     PP0 = B + s * E0 + t * E1
     return dist, PP0
+
+
 # endregion
 # endregion
 # endregion
@@ -425,7 +634,3 @@ def project_point_onto_line(a, b, p):
         result = b
 
     return result
-
-
-def LerpVector(a, b, time):
-    return a + (b - a) * time

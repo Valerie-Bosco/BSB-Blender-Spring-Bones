@@ -1,15 +1,16 @@
 import bpy
-import mathutils
 
 from .BSB_Properties import (BSB_PG_ObjectProperties,
                              BSB_PG_PoseBoneProperties, BSB_PG_SceneProperties,
                              BSB_PG_SpringBone)
 
+DEBUG = True
 
-def BSB_syncronize_sandbox(context: bpy.types.Context):
+
+def BSB_synchronize_sandbox(context: bpy.types.Context):
     armature = context.pose_object
     scene: bpy.types.Scene = context.scene
-    scene_spring_bones = context.scene.bsb_spring_bones
+    scene_spring_bones: list[BSB_PG_SpringBone] = context.scene.bsb_spring_bones
 
     # MESH COLLISION
     for scene_object in scene.objects:
@@ -39,70 +40,89 @@ def BSB_syncronize_sandbox(context: bpy.types.Context):
             pose_bone_properties: BSB_PG_PoseBoneProperties = pose_bone.bsb_pose_bone_properties
 
             is_spring_bone = pose_bone_properties.b_enable_spring
-            is_collider_bone = pose_bone_properties.b_enable_as_collider
+            # is_collider_bone = pose_bone_properties.b_enable_as_collider
 
             rotation_enabled = pose_bone_properties.b_enable_bone_rotation
-            b_can_collide = pose_bone_properties.b_should_collide
+            # b_can_collide = pose_bone_properties.b_should_collide
 
-            if (is_spring_bone or is_collider_bone):
-                bone_tail = armature.matrix_world @ pose_bone.tail
-                bone_head = armature.matrix_world @ pose_bone.head
+            if (is_spring_bone):
+                bone_head_wco = armature.matrix_world @ pose_bone.head
+                bone_tail_wco = armature.matrix_world @ pose_bone.tail
 
                 item: BSB_PG_SpringBone = scene_spring_bones.add()
                 item.name = pose_bone.name
                 item.armature = armature
-                item.last_location = bone_head
+                # item.head_frame_wco_pairing =
+                # item.last_tail_wco
 
-                parent_name = pose_bone.parent.name if pose_bone.parent is not None else ""
+                # parent_name = pose_bone.parent.name if pose_bone.parent is not None else ""
 
-                item.bone_collider = is_collider_bone
-                item.b_is_bone_colliding = b_can_collide
+                # item.bone_collider = is_collider_bone
+                # item.b_is_bone_colliding = b_can_collide
 
                 empty_radius = 1
                 if (is_spring_bone):
-                    if (bpy.data.objects.get(item.name + '_spring') is None):
-                        empty_anchor = bpy.data.objects.new(
+                    scene_spring_bones[pose_bone.name].head_speed = (0, 0, 0)
+
+
+                    # Head
+                    head_anchor: bpy.types.Object = scene.objects.get(
+                        item.name + '_spring'
+                    )
+                    if (head_anchor is None):
+                        head_anchor = bpy.data.objects.new(
                             item.name + '_spring', None
                         )
-                        context.scene.collection.objects.link(empty_anchor)
-                        empty_anchor.empty_display_size = empty_radius
-                        empty_anchor.empty_display_type = 'PLAIN_AXES'
-                        empty_anchor.location = bone_tail if rotation_enabled else bone_head
-                        empty_anchor.hide_set(True)
-                        empty_anchor.hide_select = True
+                        context.scene.collection.objects.link(
+                            head_anchor
+                        )
 
-                    if (bpy.data.objects.get(item.name + '_spring_tail') is None):
-                        empty_anchor_tail = bpy.data.objects.new(
+                    head_anchor.empty_display_size = empty_radius
+                    head_anchor.empty_display_type = 'PLAIN_AXES'
+                    head_anchor.location = bone_head_wco
+                    if (DEBUG == False):
+                        head_anchor.hide_set(True)
+                        head_anchor.hide_select = True
+
+                    # Tail
+                    tail_anchor: bpy.types.Object = bpy.data.objects.get(
+                        item.name + '_spring_tail'
+                    )
+                    if (tail_anchor is None):
+                        tail_anchor = bpy.data.objects.new(
                             item.name + '_spring_tail', None
                         )
                         context.scene.collection.objects.link(
-                            empty_anchor_tail
+                            tail_anchor
                         )
-                        empty_anchor_tail.empty_display_size = empty_radius
-                        empty_anchor_tail.empty_display_type = 'PLAIN_AXES'
-                        empty_anchor_tail.matrix_world = mathutils.Matrix.Translation(
-                            bone_tail if rotation_enabled else bone_head
-                        )
-                        empty_anchor_tail.hide_set(True)
-                        empty_anchor_tail.hide_select = True
 
-                        matrix = empty_anchor_tail.matrix_world.copy()
-                        empty_anchor_tail.parent = armature
-                        empty_anchor_tail.parent_type = "BONE"
-                        empty_anchor_tail.parent_bone = parent_name
-                        empty_anchor_tail.matrix_world = matrix
+                    tail_anchor.empty_display_size = empty_radius
+                    tail_anchor.empty_display_type = 'PLAIN_AXES'
+                    tail_anchor.location = bone_tail_wco
+                    if (DEBUG == False):
+                        tail_anchor.hide_set(True)
+                        tail_anchor.hide_select = True
+
+                    # matrix = tail_anchor.matrix_world.copy()
+                    # tail_anchor.parent = armature
+                    # tail_anchor.parent_type = "BONE"
+                    # tail_anchor.parent_bone = parent_name
+                    # tail_anchor.matrix_world = matrix
 
                     spring_constraint = pose_bone.constraints.get("spring")
                     if (spring_constraint is not None):
                         pose_bone.constraints.remove(spring_constraint)
 
                     constraint = None
-                    if (pose_bone.bsb_pose_bone_properties.b_enable_bone_rotation):
-                        constraint = pose_bone.constraints.new('DAMPED_TRACK')
-                        constraint.target = bpy.data.objects[item.name + '_spring']
-                    else:
-                        constraint = pose_bone.constraints.new('COPY_LOCATION')
-                        constraint.target = bpy.data.objects[item.name + '_spring']
+                    # if (pose_bone.bsb_pose_bone_properties.b_enable_bone_rotation):
+                    constraint = pose_bone.constraints.new('DAMPED_TRACK')
+                    constraint.target = scene.objects[
+                        item.name +
+                        "_spring_tail"
+                    ]
+                    # else:
+                    #     constraint = pose_bone.constraints.new('COPY_LOCATION')
+                    #     constraint.target = scene.objects[item.name + '_spring']
                     constraint.name = 'spring'
 
 

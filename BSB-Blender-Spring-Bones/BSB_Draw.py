@@ -4,7 +4,7 @@ import gpu
 import gpu_extras
 
 from .BSB_Properties import BSB_PG_ObjectProperties
-from .BSB_Setup import BSB_syncronize_sandbox
+from .BSB_Setup import BSB_synchronize_sandbox
 
 
 def _BuildVisualCollision(scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph):
@@ -131,7 +131,7 @@ class BSB_OT_EnableCollisionDisplay(bpy.types.Operator):
 
         else:
 
-            BSB_syncronize_sandbox(context)
+            BSB_synchronize_sandbox(context)
 
             wm.bsb_collision_rendering["shader"], wm.bsb_collision_rendering["batch"] = BSB_PrepareCollisionShapes(
                 context.scene,

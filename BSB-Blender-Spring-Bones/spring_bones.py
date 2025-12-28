@@ -3,17 +3,11 @@
 import bpy
 
 from .BSB_Properties import BSB_PG_SceneProperties
-from .BSB_Setup import BSB_syncronize_sandbox, end_spring_bone
+from .BSB_Setup import BSB_synchronize_sandbox, end_spring_bone
 from .BSB_Simulation import BSB_SpringBoneSimulationStep
 
 
-def get_pose_bone(armature_object: bpy.types.Object, name: str):
-    try:
-        return armature_object.pose.bones[name]
-    except:
-        return None
-
-
+from .modules.ALXAddonUpdater.ALXAddonUpdater.ALX_AddonUpdater import
 class SB_OT_spring_modal(bpy.types.Operator):
     """Spring Bones, interactive mode"""
 
@@ -88,7 +82,7 @@ class SB_OT_spring_modal(bpy.types.Operator):
             wm.modal_handler_add(self)
 
             scene_properties.b_global_spring = True
-            BSB_syncronize_sandbox(context)
+            BSB_synchronize_sandbox(context)
 
         else:
             return self.terminate_modal(context)
@@ -107,7 +101,7 @@ class SB_OT_spring(bpy.types.Operator):
 
         if (scene_properties.b_global_sim_only_on_frame_change == False):
             scene_properties.b_global_sim_only_on_frame_change = True
-            BSB_syncronize_sandbox(context)
+            BSB_synchronize_sandbox(context)
         else:
             end_spring_bone(self, context)
             scene_properties.b_global_sim_only_on_frame_change = False

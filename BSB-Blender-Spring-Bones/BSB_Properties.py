@@ -45,13 +45,13 @@ class BSB_PG_PoseBoneProperties(bpy.types.PropertyGroup):
         min=0.0, max=10.0,
         description="Speed/damping force applied to the bone to go back to it initial position"
     )  # type:ignore
+
     spring_gravity: bpy.props.FloatProperty( # type:ignore
         name="Gravity",
         description="Additional vertical force to simulate gravity",
-        default=-9.81,
+        default=9.81,
         min=-100.0, max=100.0
     )  # type:ignore
-
     spring_gravity_vector: bpy.props.FloatVectorProperty( # type:ignore
         name="Gravity Direction",
         description="The direction of gravity",
