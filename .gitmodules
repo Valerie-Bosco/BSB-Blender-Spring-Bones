@@ -4,3 +4,6 @@
 [submodule "BSB-Blender-Spring-Bones/modules/ALXAddonUpdater"]
 	path = BSB-Blender-Spring-Bones/modules/ALXAddonUpdater
 	url = https://github.com/Valerie-Bosco/ALXAddonUpdater.git
+[submodule "BSB-Blender-Spring-Bones/modules/ALXCompatibilityLayer"]
+	path = BSB-Blender-Spring-Bones/modules/ALXCompatibilityLayer
+	url = https://github.com/Valerie-Bosco/ALXCompatibilityLayer.git
