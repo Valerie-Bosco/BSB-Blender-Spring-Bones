@@ -7,7 +7,8 @@ from .BSB_Setup import BSB_synchronize_sandbox, end_spring_bone
 from .BSB_Simulation import BSB_SpringBoneSimulationStep
 
 
-from .modules.ALXAddonUpdater.ALXAddonUpdater.ALX_AddonUpdater import
+from .modules.ALXCompatibilityLayer.ALXCompatibilityLayer.ALXCompatibilityLayer import Armature
+
 class SB_OT_spring_modal(bpy.types.Operator):
     """Spring Bones, interactive mode"""
 
