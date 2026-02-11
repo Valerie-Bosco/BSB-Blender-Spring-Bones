@@ -15,7 +15,10 @@ def lerp_vec(vec_a, vec_b, t):
 def get_pose_bone(armature_object: bpy.types.Object, name: str):
     try:
         return armature_object.pose.bones[name]
-    except:
+    except NameError:
+        return None
+    except Exception as error:
+        print(error)
         return None
 
 
@@ -38,8 +41,8 @@ def BSB_SpringBoneSimulationStep(context: bpy.types.Context):
         empty_tail = bpy.data.objects.get(spring_bone.name + '_spring_tail')
         empty_head = bpy.data.objects.get(spring_bone.name + '_spring')
 
-        if empty_tail == None or empty_head == None:
-            return
+        if empty_tail is None or empty_head is None:
+            continue
 
         emp_tail_loc, rot, scale = empty_tail.matrix_world.decompose()
 
@@ -63,7 +66,7 @@ def BSB_SpringBoneSimulationStep(context: bpy.types.Context):
 
                 if dist < pose_bone_collider_radius:
                     push_vec = col_dir.normalized() * (pose_bone_collider_radius - dist) * \
-                        pose_bone_collider.sb_collider_force
+                               pose_bone_collider.sb_collider_force
                     if axis_locked != "NONE" and axis_locked != None:
                         if axis_locked == "+Y":
                             direction_check = pose_bone.y_axis.normalized().dot(push_vec)
@@ -144,8 +147,8 @@ def BSB_SpringBoneSimulationStep(context: bpy.types.Context):
 
         # add velocity
         spring_bone.speed += (
-            base_pos_dir *
-            pose_bone.bsb_pose_bone_properties.spring_stiffness
+                base_pos_dir *
+                pose_bone.bsb_pose_bone_properties.spring_stiffness
         )
         spring_bone.speed *= pose_bone.bsb_pose_bone_properties.spring_dampening_force
 
@@ -270,7 +273,7 @@ def project_point_onto_tri(TRI, P):
                 s = s * invDet
                 t = t * invDet
                 sqrdistance = s * (a * s + b * t + 2.0 * d) + \
-                    t * (b * s + c * t + 2.0 * e) + f
+                              t * (b * s + c * t + 2.0 * e) + f
     else:
         if s < 0.0:
             # region 2
@@ -287,7 +290,7 @@ def project_point_onto_tri(TRI, P):
                     s = numer / denom
                     t = 1 - s
                     sqrdistance = s * (a * s + b * t + 2 * d) + \
-                        t * (b * s + c * t + 2 * e) + f
+                                  t * (b * s + c * t + 2 * e) + f
 
             else:  # minimum on edge s=0
                 s = 0.0
@@ -318,8 +321,8 @@ def project_point_onto_tri(TRI, P):
                         t = numer / denom
                         s = 1 - t
                         sqrdistance = s * \
-                            (a * s + b * t + 2.0 * d) + t * \
-                            (b * s + c * t + 2.0 * e) + f
+                                      (a * s + b * t + 2.0 * d) + t * \
+                                      (b * s + c * t + 2.0 * e) + f
 
                 else:
                     t = 0.0
@@ -350,8 +353,8 @@ def project_point_onto_tri(TRI, P):
                         s = numer / denom
                         t = 1 - s
                         sqrdistance = s * \
-                            (a * s + b * t + 2.0 * d) + t * \
-                            (b * s + c * t + 2.0 * e) + f
+                                      (a * s + b * t + 2.0 * d) + t * \
+                                      (b * s + c * t + 2.0 * e) + f
 
     # account for numerical round-off error
     if sqrdistance < 0:
@@ -453,12 +456,11 @@ def update_bone(self, context: bpy.types.Context):
 
 def end_spring_bone(self, context: bpy.types.Context):
     scene_properties: BSB_PG_SceneProperties = context.scene.bsb_scene_properties
-    if scene_properties.b_global_spring:
-
+    if scene_properties.b_async_spring_simulation_running:
         wm: bpy.types.WindowManager = context.window_manager
-        wm.event_timer_remove(self.timer_handler)
+        wm.event_timer_remove(self.async_sim_timer)
 
-        scene_properties.b_global_spring = False
+        scene_properties.b_async_spring_simulation_running = False
 
     for item in context.scene.bsb_spring_bones:
 
@@ -478,57 +480,59 @@ def end_spring_bone(self, context: bpy.types.Context):
             bpy.data.objects.remove(emp2)
 
 
-class SB_OT_spring_modal(bpy.types.Operator):
-    """Spring Bones, interactive mode"""
+class BSB_OT_ASyncSpringSimulation(bpy.types.Operator):
+    """"""
 
+    bl_label = "ASync Spring Simulation"
     bl_idname = "sb.spring_bone"
-    bl_label = "spring_bone"
 
-    timer_handler = None
+    async_sim_timer = None
 
     def terminate_modal(self, context: bpy.types.Context):
-        if (self.timer_handler is not None):
-            wm: bpy.types.WindowManager = context.window_manager
-            wm.modal_handler_add
-            wm.event_timer_remove(self.timer_handler)
+        if self.async_sim_timer is not None:
+            context.window_manager.event_timer_remove(self.async_sim_timer)
 
-        if (context.scene is not None):
+        if context.scene is not None:
             scene_properties: BSB_PG_SceneProperties = context.scene.bsb_scene_properties
-            scene_properties.b_global_spring = False
+            scene_properties.b_async_spring_simulation_running = False
 
-            if (context.pose_object is not None):
+            if context.pose_object is not None:
                 armature_object: bpy.types.Object = context.pose_object
 
-                for item in context.scene.bsb_spring_bones:
-                    active_bone: bpy.types.PoseBone = armature_object.pose.bones.get(
-                        item.name
-                    )
-                    if (active_bone is None):
+                for sb_item in context.scene.bsb_spring_bones:
+                    try:
+                        active_bone: bpy.types.PoseBone = armature_object.pose.bones[
+                            sb_item.name
+                        ]
+                        constraint = active_bone.constraints.get("spring")
+                        if constraint is not None:
+                            active_bone.constraints.remove(constraint)
+
+                        anchor = bpy.data.objects.get(
+                            active_bone.name + '_spring'
+                        )
+                        anchor_tail = bpy.data.objects.get(
+                            active_bone.name + '_spring_tail'
+                        )
+
+                        if anchor is not None:
+                            bpy.data.objects.remove(anchor)
+                        if anchor_tail is not None:
+                            bpy.data.objects.remove(anchor_tail)
+
+                    except NameError:
+                        continue
+                    except Exception as error:
+                        print(error)
                         continue
 
-                    constraint = active_bone.constraints.get("spring")
-                    if (constraint is not None):
-                        active_bone.constraints.remove(constraint)
-
-                    anchor = bpy.data.objects.get(
-                        active_bone.name + '_spring'
-                    )
-                    anchor_tail = bpy.data.objects.get(
-                        active_bone.name + '_spring_tail'
-                    )
-                    if (anchor is not None):
-                        bpy.data.objects.remove(anchor)
-                    if (anchor_tail is not None):
-                        bpy.data.objects.remove(anchor_tail)
-
-            scene_properties.b_global_spring = False
         return {"FINISHED"}
 
     def modal(self, context, event):
-        if (event.type == "ESC") or (context.scene.bsb_scene_properties.b_global_spring == False):
+        if (event.type == "ESC") or (context.scene.bsb_scene_properties.b_async_spring_simulation_running == False):
             return self.terminate_modal(context)
 
-        if (event.type == 'TIMER'):
+        if event.type == "TIMER":
             BSB_SpringBoneSimulationStep(context)
 
         return {'PASS_THROUGH'}
@@ -536,14 +540,14 @@ class SB_OT_spring_modal(bpy.types.Operator):
     def invoke(self, context: bpy.types.Context, event):
         scene_properties: BSB_PG_SceneProperties = context.scene.bsb_scene_properties
 
-        if (scene_properties.b_global_spring == False):
+        if not scene_properties.b_async_spring_simulation_running:
             wm: bpy.types.WindowManager = context.window_manager
-            self.timer_handler = wm.event_timer_add(
+            self.async_sim_timer = wm.event_timer_add(
                 0.02, window=context.window
             )
             wm.modal_handler_add(self)
 
-            scene_properties.b_global_spring = True
+            scene_properties.b_async_spring_simulation_running = True
             update_bone(self, context)
 
         else:
@@ -561,12 +565,12 @@ class SB_OT_spring(bpy.types.Operator):
     def execute(self, context: bpy.types.Context):
         scene_properties: BSB_PG_SceneProperties = context.scene.bsb_scene_properties
 
-        if (scene_properties.b_global_sim_only_on_frame_change == False):
-            scene_properties.b_global_sim_only_on_frame_change = True
+        if not scene_properties.b_framesync_spring_simulation_running:
+            scene_properties.b_framesync_spring_simulation_running = True
             update_bone(self, context)
         else:
             end_spring_bone(self, context)
-            scene_properties.b_global_sim_only_on_frame_change = False
+            scene_properties.b_framesync_spring_simulation_running = False
 
         return {'FINISHED'}
 
@@ -590,6 +594,3 @@ class SB_OT_select_bone(bpy.types.Operator):
         # get_pose_bone(self.bone_name).select = True
 
         return {'FINISHED'}
-
-
-###########  UI PANEL  ###################

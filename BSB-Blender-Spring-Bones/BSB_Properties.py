@@ -44,15 +44,17 @@ class BSB_PG_SpringBone(bpy.types.PropertyGroup):
 
 
 class BSB_PG_SceneProperties(bpy.types.PropertyGroup):
-    b_global_spring: bpy.props.BoolProperty(
-        name="Enable spring",
+    b_async_spring_simulation_running: bpy.props.BoolProperty(  # type:ignore
+        name="Enable Async-Spring",
         default=False
     )  # type:ignore
-    b_global_sim_only_on_frame_change: bpy.props.BoolProperty(
-        name="Enable Spring",
-        description="Enable Spring on frame change only",
+
+    b_framesync_spring_simulation_running: bpy.props.BoolProperty(  # type:ignore
+        name="Enable Framesync-Spring",
+        description="",
         default=False
     )  # type:ignore
+
     b_show_colliders: bpy.props.BoolProperty(
         name="Show Colliders",
         description="Show active colliders names",
