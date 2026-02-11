@@ -4,6 +4,7 @@
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/BSB-Blender-Spring-Bones/modules/ALXAddonUpdater" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/BSB-Blender-Spring-Bones/modules/ALXCompatibilityLayer" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/BSB-Blender-Spring-Bones/modules/ALXModuleManager" vcs="Git" />
   </component>
 </project>

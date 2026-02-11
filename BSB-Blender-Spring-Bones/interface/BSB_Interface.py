@@ -1,9 +1,7 @@
+from ..BSB_Operators import BSB_OT_BakeAnimationToAction
 import bpy
 
-from ..BSB_Operators import BSB_OT_BakeAnimationToAction
-from ..BSB_Properties import (BSB_PG_ObjectProperties,
-                              BSB_PG_PoseBoneProperties,
-                              BSB_PG_SceneProperties)
+from ..BSB_Properties import BSB_PG_PoseBoneProperties, BSB_PG_SceneProperties
 from ..spring_bones import SB_OT_spring, SB_OT_spring_modal
 
 
@@ -18,17 +16,12 @@ class BSB_PT_UI(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return True
+        return (context is not None) and (context.mode == "POSE") and (context.active_object is not None)
 
     def draw(self, context):
         layout: bpy.types.UILayout = self.layout.column(align=True)
 
-        if (
-            (context is not None) and
-            (context.mode == "POSE") and
-            (context.active_object is not None) and
-            (context.active_pose_bone is not None)
-        ):
+        if (context.active_pose_bone is not None):
             scene_properties: BSB_PG_SceneProperties = context.scene.bsb_scene_properties
             pose_bone_properties: BSB_PG_PoseBoneProperties = context.active_pose_bone.bsb_pose_bone_properties
 
@@ -57,20 +50,7 @@ class BSB_PT_UI(bpy.types.Panel):
                     text="Start - Animation Mode", icon="PLAY"
                 )
 
-            layout.prop(
-                scene_properties,
-                "b_use_scene_framerate",
-                text="Use scene framerate"
-            )
-
-            if (scene_properties.b_use_scene_framerate == False):
-                layout.prop(
-                    scene_properties,
-                    "custom_framerate",
-                    text="Framerate"
-                )
-
-            layout.operator(
+            bake_button = layout.operator(
                 BSB_OT_BakeAnimationToAction.bl_idname,
                 text="Bake to action"
             )
@@ -106,11 +86,21 @@ class BSB_PT_UI(bpy.types.Panel):
             ui_bone_parameters.prop(
                 pose_bone_properties, "b_should_collide", text="Should collide"
             )
+            ui_bone_parameters.prop(
+                pose_bone_properties, "collider_radius", text="Collider Distance"
+            )
+            ui_bone_parameters.prop(
+                pose_bone_properties, "collider_repulsion_force", text="Collider Force"
+            )
 
             ui_bone_parameters.label(text="Lock axis when colliding:")
             ui_bone_parameters.prop(
                 pose_bone_properties, "spring_axis_lock", text=""
             )
+
+            layout.separator()
+            # layout.prop(scene, "sb_show_colliders")
+            col = layout.column(align=True)
 
             # if scene.sb_show_colliders:
             #     for pbone in bpy.context.active_object.pose.bones:
@@ -118,28 +108,8 @@ class BSB_PT_UI(bpy.types.Panel):
             #             if pbone.sb_bone_collider:
             #                 row = col.row()
             #                 row.label(text=pbone.name)
-            #                 r = row.operator(
-            #                     SB_OT_select_bone.bl_idname, text="Select")
+            #                 r = row.operator(SB_OT_select_bone.bl_idname, text="Select")
             #                 r.bone_name = pbone.name
-        else:
-            layout.label(text="Only available in pose mode ")
-
-        if (
-            (context is not None) and
-            (context.mode == "OBJECT") and
-            (context.active_object is not None)
-        ):
-            object_properties: BSB_PG_ObjectProperties = context.active_object.bsb_object_properties
-            layout.separator()
-            layout.prop(object_properties, "b_collider", text="Is Collider")
-            layout.prop(
-                object_properties, "collider_radius",
-                text="Collision Thickness (Padding)"
-            )
-            layout.prop(
-                object_properties,
-                "collider_repulsion_force", text="Repulsion Force"
-            )
 
 
 class SB_PT_object_ui(bpy.types.Panel):
