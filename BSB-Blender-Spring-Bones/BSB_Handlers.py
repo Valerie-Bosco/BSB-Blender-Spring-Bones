@@ -1,6 +1,6 @@
 import bpy
 
-from .spring_bones import BSB_SpringBoneSimulationStep
+from .simulation import BSB_simulation
 
 
 @bpy.app.handlers.persistent
@@ -9,5 +9,5 @@ def BSB_FrameChangePost(scene, depsgraph):
 
 
 def BSB_LAMBDA_FrameChangePost(scene, depsgraph):
-    if (scene.bsb_scene_properties.b_framesync_spring_simulation_running == True):
-        BSB_SpringBoneSimulationStep(bpy.context)
+    if scene.bsb_scene_properties.b_framesync_spring_simulation_running:
+        BSB_simulation.BSB_SpringBoneSimulationStep(bpy.context)

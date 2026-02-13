@@ -2,7 +2,7 @@ import bpy
 
 from ..BSB_Operators import BSB_OT_BakeAnimationToAction
 from ..BSB_Properties import BSB_PG_SceneProperties
-from ..spring_bones import BSB_OT_ASyncSpringSimulation, SB_OT_spring
+from ..simulation.BSB_operators import BSB_OT_ASyncSpringSimulation, BSB_OT_FrameSyncSpringSimulation
 
 
 class BSB_PT_UI(bpy.types.Panel):
@@ -39,15 +39,22 @@ class BSB_PT_UI(bpy.types.Panel):
                 icon="PLAY"
             )
 
+            # ui_scene_parameters.operator(
+            #     operators.SB_OT_spring.bl_idname,
+            #     text="Start - Animation Mode",
+            #     icon="PLAY"
+            # )
+
+        if scene_properties.b_async_spring_simulation_running:
             ui_scene_parameters.operator(
-                SB_OT_spring.bl_idname,
-                text="Start - Animation Mode",
-                icon="PLAY"
+                BSB_OT_ASyncSpringSimulation.bl_idname,
+                text="Stop",
+                icon="PAUSE"
             )
 
-        if scene_properties.b_async_spring_simulation_running or scene_properties.b_framesync_spring_simulation_running:
+        if scene_properties.b_framesync_spring_simulation_running:
             ui_scene_parameters.operator(
-                SB_OT_spring.bl_idname,
+                BSB_OT_FrameSyncSpringSimulation.bl_idname,
                 text="Stop",
                 icon="PAUSE"
             )
